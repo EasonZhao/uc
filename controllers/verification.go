@@ -22,10 +22,6 @@ type VerificationController struct {
 	store captcha.Store
 }
 
-func (this *VerificationController) init() {
-	this.store = captcha.NewMemoryStore(captcha.CollectNum, captcha.Expiration)
-}
-
 // @Title Verification captcha
 // @Description Request captcha image
 // @Success 200 {status: "ok", data:

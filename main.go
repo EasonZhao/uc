@@ -5,7 +5,25 @@ import (
 
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/logs"
+	"github.com/astaxie/beego/orm"
+	_ "github.com/go-sql-driver/mysql"
+	"time"
 )
+
+func init() {
+	orm.DefaultTimeLoc = time.UTC
+	err := orm.RegisterDriver("mysql", orm.DRMySQL)
+	if err != nil {
+		beego.Error(err)
+		panic(err)
+	}
+	dbUrl := beego.AppConfig.String("DBUrl")
+	err = orm.RegisterDataBase("default", "mysql", dbUrl)
+	if err != nil {
+		beego.Error(err)
+		panic(err)
+	}
+}
 
 func main() {
 	if beego.BConfig.RunMode == "dev" {

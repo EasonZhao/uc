@@ -2,85 +2,81 @@ package models
 
 import (
 	"errors"
-	"strconv"
+	"fmt"
+	"github.com/astaxie/beego/orm"
 	"time"
 )
 
-var (
-	UserList map[string]*User
+const (
+	DB    = "mysql"
+	TABLE = "user"
 )
 
+var o orm.Ormer
+
 func init() {
-	UserList = make(map[string]*User)
-	u := User{"user_11111", "astaxie", "11111", Profile{"male", 20, "Singapore", "astaxie@gmail.com"}}
-	UserList["user_11111"] = &u
+	o = orm.NewOrm()
+	o.Using("default")
+}
+
+func Authenticate(username, password string) *User {
+
+	return nil
 }
 
 type User struct {
-	Id       string
-	Username string
-	Password string
-	Profile  Profile
+	Id          int
+	Nationality string    `orm:"null;size(20)"`
+	PhoneNum    string    `orm:"unique;null;size(20)"`
+	Email       string    `orm:"unique;null;size(36)"`
+	Username    string    `orm:"unique;size(20)"`
+	Password    string    `orm:"size(20)"`
+	RegTime     time.Time `orm:"auto_now_add;type(datatime)"`
 }
 
-type Profile struct {
-	Gender  string
-	Age     int
-	Address string
-	Email   string
+func (this *User) TableEngine() string {
+	return "INNODB AUTO_INCREMENT=100028"
 }
 
-func AddUser(u User) string {
-	u.Id = "user_" + strconv.FormatInt(time.Now().UnixNano(), 10)
-	UserList[u.Id] = &u
-	return u.Id
+func existPhone(phone string) bool {
+	return o.QueryTable(TABLE).Filter("phonenum", phone).Exist()
 }
 
-func GetUser(uid string) (u *User, err error) {
-	if u, ok := UserList[uid]; ok {
-		return u, nil
+func existEmail(email string) bool {
+	return o.QueryTable(TABLE).Filter("email", email).Exist()
+}
+
+func RegisterByPhone(phone, password, nationality string) (User, error) {
+	user := User{}
+	user.PhoneNum = phone
+	user.Password = password
+	user.Username = phone
+	user.Nationality = nationality
+	if existPhone(phone) {
+		str := fmt.Sprintf("phone %s already register", phone)
+		return user, errors.New(str)
 	}
-	return nil, errors.New("User not exists")
-}
-
-func GetAllUsers() map[string]*User {
-	return UserList
-}
-
-func UpdateUser(uid string, uu *User) (a *User, err error) {
-	if u, ok := UserList[uid]; ok {
-		if uu.Username != "" {
-			u.Username = uu.Username
-		}
-		if uu.Password != "" {
-			u.Password = uu.Password
-		}
-		if uu.Profile.Age != 0 {
-			u.Profile.Age = uu.Profile.Age
-		}
-		if uu.Profile.Address != "" {
-			u.Profile.Address = uu.Profile.Address
-		}
-		if uu.Profile.Gender != "" {
-			u.Profile.Gender = uu.Profile.Gender
-		}
-		if uu.Profile.Email != "" {
-			u.Profile.Email = uu.Profile.Email
-		}
-		return u, nil
+	id, err := o.Insert(user)
+	if id == 0 {
+		return user, err
 	}
-	return nil, errors.New("User Not Exist")
+	user.Id = int(id)
+	return user, nil
 }
 
-func Login(username, password string) bool {
-	for _, u := range UserList {
-		if u.Username == username && u.Password == password {
-			return true
-		}
+func RegisterByEmail(email, password string) (User, error) {
+	user := User{}
+	user.Email = email
+	user.Password = password
+	user.Username = email
+	if existEmail(email) {
+		str := fmt.Sprintf("email %s already register", email)
+		return user, errors.New(str)
 	}
-	return false
-}
-
-func DeleteUser(uid string) {
-	delete(UserList, uid)
+	id, err := o.Insert(user)
+	if id == 0 {
+		return user, err
+	}
+	user.Id = int(id)
+	return user, nil
 }
