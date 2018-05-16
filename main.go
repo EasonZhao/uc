@@ -7,33 +7,30 @@ import (
 	"github.com/astaxie/beego/logs"
 	"github.com/astaxie/beego/orm"
 	_ "github.com/go-sql-driver/mysql"
+	"os"
 	"time"
 )
 
 func init() {
+	// init log
+	os.Mkdir("/tmp/uc", 0777)
+	logs.SetLogger(logs.AdapterMultiFile, `{"filename":"/tmp/uc/debug.log","level":7,"maxlines":0,"maxsize":0,"daily":true,"maxdays":30}`)
+
+	// init orm
 	orm.DefaultTimeLoc = time.UTC
-	err := orm.RegisterDriver("mysql", orm.DRMySQL)
-	if err != nil {
-		beego.Error(err)
-		panic(err)
-	}
+	orm.RegisterDriver("mysql", orm.DRMySQL)
 	dbUrl := beego.AppConfig.String("DBUrl")
-	err = orm.RegisterDataBase("default", "mysql", dbUrl)
+	err := orm.RegisterDataBase("default", "mysql", dbUrl)
 	if err != nil {
-		beego.Error(err)
-		panic(err)
+		logs.Critical(err)
 	}
 }
 
 func main() {
+	orm.RunCommand()
 	if beego.BConfig.RunMode == "dev" {
 		beego.BConfig.WebConfig.DirectoryIndex = true
-		//beego.BConfig.WebConfig.StaticDir["/swagger"] = "swagger"
-		//logs.SetLogger(logs.AdapterConn, `{"net":"tcp", "addr":"0.0.0.0:7020"}`)
 		beego.BeeLogger.SetLevel(beego.LevelDebug)
 	}
-	// init log
-	logs.SetLogger(logs.AdapterMultiFile, `{"filename":"/tmp/uc/logs/uc.log", "maxdays":30}`)
 	beego.Run()
-
 }

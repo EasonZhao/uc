@@ -15,8 +15,7 @@ const (
 var o orm.Ormer
 
 func init() {
-	o = orm.NewOrm()
-	o.Using("default")
+	orm.RegisterModel(new(User))
 }
 
 func Authenticate(username, password string) *User {

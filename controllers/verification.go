@@ -18,8 +18,6 @@ const (
 // UCS Verification API
 type VerificationController struct {
 	beego.Controller
-
-	store captcha.Store
 }
 
 // @Title Verification captcha
