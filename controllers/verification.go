@@ -83,7 +83,6 @@ func (this *VerificationController) Update() {
 		this.Data["json"] = result
 		this.ServeJSON()
 		return
-
 	}
 	width, _ := this.GetInt("width")
 	if width < 120 || width > 480 {

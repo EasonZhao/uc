@@ -5,9 +5,8 @@
 package routers
 
 import (
-	"usercenter/controllers"
-
 	"github.com/astaxie/beego"
+	"usercenter/controllers"
 )
 
 func init() {
@@ -15,6 +14,16 @@ func init() {
 		beego.NSNamespace("/verification",
 			beego.NSInclude(
 				&controllers.VerificationController{},
+			),
+		),
+		beego.NSNamespace("/account",
+			beego.NSInclude(
+				&controllers.AccountController{},
+			),
+		),
+		beego.NSNamespace("/email",
+			beego.NSInclude(
+				&controllers.EmailController{},
 			),
 		),
 	)

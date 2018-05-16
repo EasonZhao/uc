@@ -5,14 +5,13 @@ import (
 	"fmt"
 	"github.com/astaxie/beego/orm"
 	"time"
+	"usercenter/util"
 )
 
 const (
 	DB    = "mysql"
 	TABLE = "user"
 )
-
-var o orm.Ormer
 
 func init() {
 	orm.RegisterModel(new(User))
@@ -38,10 +37,12 @@ func (this *User) TableEngine() string {
 }
 
 func existPhone(phone string) bool {
+	o := orm.NewOrm()
 	return o.QueryTable(TABLE).Filter("phonenum", phone).Exist()
 }
 
 func existEmail(email string) bool {
+	o := orm.NewOrm()
 	return o.QueryTable(TABLE).Filter("email", email).Exist()
 }
 
@@ -55,6 +56,7 @@ func RegisterByPhone(phone, password, nationality string) (User, error) {
 		str := fmt.Sprintf("phone %s already register", phone)
 		return user, errors.New(str)
 	}
+	o := orm.NewOrm()
 	id, err := o.Insert(user)
 	if id == 0 {
 		return user, err
@@ -63,19 +65,26 @@ func RegisterByPhone(phone, password, nationality string) (User, error) {
 	return user, nil
 }
 
-func RegisterByEmail(email, password string) (User, error) {
+func RegistByEmail(email, password string) (*User, error) {
+	if !util.CheckEmail(email) {
+		return nil, errors.New("email invalid.")
+	}
+	if !util.CheckPassword(password) {
+		return nil, errors.New("password invalid.")
+	}
 	user := User{}
 	user.Email = email
 	user.Password = password
 	user.Username = email
 	if existEmail(email) {
 		str := fmt.Sprintf("email %s already register", email)
-		return user, errors.New(str)
+		return &user, errors.New(str)
 	}
-	id, err := o.Insert(user)
-	if id == 0 {
-		return user, err
+	o := orm.NewOrm()
+	id, err := o.Insert(&user)
+	if err != nil {
+		return nil, err
 	}
 	user.Id = int(id)
-	return user, nil
+	return &user, nil
 }
