@@ -23,13 +23,16 @@ func Authenticate(username, password string) *User {
 }
 
 type User struct {
-	Id          int
-	Nationality string    `orm:"null;size(20)"`
-	PhoneNum    string    `orm:"unique;null;size(20)"`
-	Email       string    `orm:"unique;null;size(36)"`
-	Username    string    `orm:"unique;size(20)"`
-	Password    string    `orm:"size(20)"`
-	RegTime     time.Time `orm:"auto_now_add;type(datatime)"`
+	Id             int
+	Nationality    string    `orm:"null;size(20)"`
+	PhoneNum       string    `orm:"unique;null;size(20)"`
+	Email          string    `orm:"unique;null;size(36)"`
+	Username       string    `orm:"unique;size(20)"`
+	Password       string    `orm:"size(20)"`
+	RegTime        time.Time `orm:"auto_now_add;type(datatime)"`
+	AuthPhone      bool      `orm:"default(false)"`
+	AuthEmail      bool      `orm:"default(false)"`
+	AuthGoogleAuth bool      `orm:"default(false)"`
 }
 
 func (this *User) TableEngine() string {
@@ -91,6 +94,7 @@ func RegistByEmail(email, password string) (*User, error) {
 	user.Email = email
 	user.Password = password
 	user.Username = email
+	user.AuthEmail = true
 	if existEmail(email) {
 		str := fmt.Sprintf("email %s already register", email)
 		return &user, errors.New(str)
@@ -101,5 +105,17 @@ func RegistByEmail(email, password string) (*User, error) {
 		return nil, err
 	}
 	user.Id = int(id)
+	return &user, nil
+}
+
+func QueryUserById(id int) (*User, error) {
+	o := orm.NewOrm()
+	var user User
+	err := o.QueryTable(TABLE).Filter("id", id).One(&user)
+	if err == orm.ErrMultiRows {
+		//TODO log
+	} else if err == orm.ErrNoRows {
+		return nil, errors.New("username not exist.")
+	}
 	return &user, nil
 }
