@@ -27,22 +27,9 @@ data说明：
 	"data": {
 		"id": "16WRvu4to1NGMsuNUHrP",
 		"expiration": 600,
-		"base64": "xxxxxxxxxxxxxxxx"，
-		"width": "240",
-		"height": "80"
+		"base64": "xxxxxxxxxxxxxxxx",
+		"width": 240,
+		"height": 80
 	}
 }
 ```
-
-```
-
-**POST /api/v1/verification/verify 验证**
-请求参数：
-|参数名称	|	是否必须	|类型	|描述	|默认值	|取值范围	|
-|:-----	|:----:| :------: |:----:|:----:|:----|
-|id	|true	|string	|验证码id	
-|digital	|true	|string	|内容
-响应数据:
-|参数名称	|	是否必须	|类型	|描述	|取值范围	|
-|:-----	|:----:| :------: |:----|:----|
-| status    |true	|string	|请求处理结果	|"ok","error"	|
