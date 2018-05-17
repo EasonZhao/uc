@@ -19,8 +19,7 @@ func init() {
 	orm.DefaultTimeLoc = time.UTC
 	orm.RegisterDriver("mysql", orm.DRMySQL)
 	dbUrl := beego.AppConfig.String("dburl")
-	err := orm.RegisterDataBase("default", "mysql", dbUrl)
-	if err != nil {
+	if err := orm.RegisterDataBase("default", "mysql", dbUrl); err != nil {
 		logs.Critical(err)
 	}
 }

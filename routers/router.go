@@ -50,6 +50,7 @@ func filterToken(ctx *context.Context) {
 		}
 		return "", errors.New("invalid authorization.")
 	}
+
 	tokenStr, err := parseToken(ss)
 	if err != nil {
 		result := controllers.NewRPCResult(controllers.STATUS_ERR)

@@ -45,8 +45,7 @@ func (this *AccountController) Regist() {
 	result := NewRPCResult(STATUS_OK)
 	regitType := this.GetString("type")
 	info := registInfo{}
-	err := json.Unmarshal(this.Ctx.Input.RequestBody, &info)
-	if err != nil {
+	if err := json.Unmarshal(this.Ctx.Input.RequestBody, &info); err != nil {
 		result.Status = STATUS_ERR
 		result.Data["code"] = "invalid param"
 		this.Data["json"] = result
@@ -85,8 +84,7 @@ func (this *AccountController) Regist() {
 func (this *AccountController) Login() {
 	result := NewRPCResult(STATUS_OK)
 	info := loginInfo{}
-	err := json.Unmarshal(this.Ctx.Input.RequestBody, &info)
-	if err != nil {
+	if err := json.Unmarshal(this.Ctx.Input.RequestBody, &info); err != nil {
 		result.Status = STATUS_ERR
 		result.Data["code"] = "invalid param."
 		this.Data["json"] = result

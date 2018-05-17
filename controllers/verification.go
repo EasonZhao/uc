@@ -39,8 +39,7 @@ func (this *VerificationController) Captcha() {
 	}
 	id := captcha.NewLen(LENGTH)
 	b := bytes.NewBuffer(make([]byte, 0))
-	err := captcha.WriteImage(b, id, width, height)
-	if err != nil {
+	if err := captcha.WriteImage(b, id, width, height); err != nil {
 		beego.Error("captcha image write err=", err)
 		this.Abort("500")
 	}
@@ -93,8 +92,7 @@ func (this *VerificationController) Update() {
 		height = HEIGHT
 	}
 	b := bytes.NewBuffer(make([]byte, 0))
-	err := captcha.WriteImage(b, id, width, height)
-	if err != nil {
+	if err := captcha.WriteImage(b, id, width, height); err != nil {
 		beego.Error("captcha image write err=", err)
 		this.Abort("500")
 	}
