@@ -65,6 +65,21 @@ func RegisterByPhone(phone, password, nationality string) (User, error) {
 	return user, nil
 }
 
+func Login(username, password string) (*User, error) {
+	o := orm.NewOrm()
+	var user User
+	err := o.QueryTable(TABLE).Filter("username", username).One(&user)
+	if err == orm.ErrMultiRows {
+		//TODO log
+	} else if err == orm.ErrNoRows {
+		return nil, errors.New("username not exist.")
+	}
+	if user.Password != password {
+		return nil, errors.New("password error.")
+	}
+	return &user, nil
+}
+
 func RegistByEmail(email, password string) (*User, error) {
 	if !util.CheckEmail(email) {
 		return nil, errors.New("email invalid.")

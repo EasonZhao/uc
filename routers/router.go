@@ -18,7 +18,9 @@ func init() {
 		),
 		beego.NSNamespace("/account",
 			beego.NSInclude(
-				&controllers.AccountController{},
+				&controllers.AccountController{
+					SecretKey: beego.AppConfig.String("secretkey"),
+				},
 			),
 		),
 		beego.NSNamespace("/email",

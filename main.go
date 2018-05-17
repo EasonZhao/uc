@@ -1,14 +1,13 @@
 package main
 
 import (
-	_ "usercenter/routers"
-
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/logs"
 	"github.com/astaxie/beego/orm"
 	_ "github.com/go-sql-driver/mysql"
 	"os"
 	"time"
+	_ "usercenter/routers"
 )
 
 func init() {
@@ -19,7 +18,7 @@ func init() {
 	// init orm
 	orm.DefaultTimeLoc = time.UTC
 	orm.RegisterDriver("mysql", orm.DRMySQL)
-	dbUrl := beego.AppConfig.String("DBUrl")
+	dbUrl := beego.AppConfig.String("dburl")
 	err := orm.RegisterDataBase("default", "mysql", dbUrl)
 	if err != nil {
 		logs.Critical(err)
