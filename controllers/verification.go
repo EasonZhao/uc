@@ -96,11 +96,11 @@ func (this *VerificationController) Update() {
 		beego.Error("captcha image write err=", err)
 		this.Abort("500")
 	}
-	encode_str := base64.StdEncoding.EncodeToString(b.Bytes())
+	encodeStr := base64.StdEncoding.EncodeToString(b.Bytes())
 	result.Data["id"] = id
 	result.Data["width"] = strconv.Itoa(width)
 	result.Data["height"] = strconv.Itoa(height)
-	result.Data["base64"] = encode_str
+	result.Data["base64"] = encodeStr
 	exp_t := time.Now().UTC().Unix() + int64(captcha.Expiration.Seconds())
 	result.Data["expiration"] = strconv.FormatInt(exp_t, 10)
 	this.Data["json"] = result

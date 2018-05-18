@@ -39,6 +39,9 @@ func init() {
 
 	//filter
 	beego.InsertFilter("/api/v1/account/info", beego.BeforeRouter, filterToken)
+	beego.InsertFilter("/api/v1/account/authotp", beego.BeforeRouter, filterToken)
+	beego.InsertFilter("/api/v1/account/acceptotp", beego.BeforeRouter, filterToken)
+	beego.InsertFilter("/api/v1/account/otpverify", beego.BeforeRouter, filterToken)
 }
 
 func filterToken(ctx *context.Context) {

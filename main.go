@@ -30,5 +30,6 @@ func main() {
 		beego.BConfig.WebConfig.DirectoryIndex = true
 		beego.BeeLogger.SetLevel(beego.LevelDebug)
 	}
+
 	beego.Run()
 }

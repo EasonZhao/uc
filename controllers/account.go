@@ -1,10 +1,15 @@
 package controllers
 
 import (
+	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"github.com/astaxie/beego"
+	"github.com/astaxie/beego/cache"
 	"github.com/astaxie/beego/logs"
 	"github.com/dgrijalva/jwt-go"
+	"github.com/pquerna/otp/totp"
+	"image/png"
 	"strconv"
 	"time"
 	"usercenter/models"
@@ -30,6 +35,20 @@ type registInfo struct {
 type loginInfo struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
+}
+
+type googleVerifyInfo struct {
+	Code string `json:"code"`
+}
+
+var mc cache.Cache
+
+func init() {
+	var err error
+	if mc, err = cache.NewCache("memory", `{"interval":60}`); err != nil {
+		logs.Critical(err)
+		panic(err)
+	}
 }
 
 //短信验证码确认
@@ -154,4 +173,142 @@ func (this *AccountController) Info() {
 	}
 	this.Data["json"] = result
 	this.ServeJSON()
+}
+
+// @router /authotp [post]
+func (this *AccountController) AuthOtp() {
+	result := NewRPCResult(STATUS_OK)
+	id := this.Ctx.Input.GetData("id").(int)
+	u, err := models.QueryUserById(id)
+	if err != nil || u == nil {
+		logs.Error("query user failure, id = ", id)
+		result.Status = STATUS_ERR
+		result.Data["code"] = "server internal error"
+		this.Data["json"] = result
+		this.ServeJSON()
+		return
+	}
+	if u.GAAuth.Authed {
+		result.Status = STATUS_ERR
+		result.Data["code"] = "otp exist"
+	} else {
+		key, err := totp.Generate(totp.GenerateOpts{
+			Issuer:      "usercenter",
+			AccountName: u.Username,
+		})
+		if err != nil {
+			result.Status = STATUS_ERR
+			result.Data["code"] = err.Error()
+		} else {
+			img, err := key.Image(520, 520)
+			if err != nil {
+				result.Status = STATUS_ERR
+				result.Data["code"] = err.Error()
+				this.Data["json"] = result
+				this.ServeJSON()
+			}
+			var buf bytes.Buffer
+			png.Encode(&buf, img)
+			encodeStr := base64.StdEncoding.EncodeToString(buf.Bytes())
+			result.Data["base64"] = encodeStr
+			//put into cache
+			name := "otp_" + u.Username
+			mc.Put(name, key.Secret(), time.Minute*5)
+			result.Data["code"] = key.Secret()
+		}
+	}
+	this.Data["json"] = result
+	this.ServeJSON()
+}
+
+// @router /acceptotp [post]
+func (this *AccountController) AcceptOtp() {
+	result := NewRPCResult(STATUS_OK)
+	id := this.Ctx.Input.GetData("id").(int)
+	u, err := models.QueryUserById(id)
+	if err != nil || u == nil {
+		logs.Error("query user failure, id = ", id)
+		result.Status = STATUS_ERR
+		result.Data["code"] = "server internal error"
+		this.Data["json"] = result
+		this.ServeJSON()
+		return
+	}
+	info := struct {
+		Code string `json:"code"`
+	}{}
+	if err := json.Unmarshal(this.Ctx.Input.RequestBody, &info); err != nil {
+		result.Status = STATUS_ERR
+		result.Data["code"] = "invalid param"
+		this.Data["json"] = result
+		this.ServeJSON()
+		return
+	}
+
+	if u.GAAuth.Authed {
+		result.Status = STATUS_ERR
+		result.Data["code"] = "otp exist"
+	} else {
+		name := "otp_" + u.Username
+		val := mc.Get(name)
+		if sercet, ok := val.(string); ok {
+			if totp.Validate(info.Code, sercet) {
+				mc.Delete(name)
+				if err := u.AuthGA(sercet); err != nil {
+					result.Status = STATUS_ERR
+					result.Data["code"] = err.Error()
+				}
+			} else {
+				result.Status = STATUS_ERR
+				result.Data["code"] = "token mismatch"
+			}
+		}
+
+	}
+	this.Data["json"] = result
+	this.ServeJSON()
+}
+
+// @router /otpverify [post]
+func (this *AccountController) GoogleVerify() {
+	result := NewRPCResult(STATUS_OK)
+	info := struct {
+		Code string `json:"code"`
+	}{}
+	if err := json.Unmarshal(this.Ctx.Input.RequestBody, &info); err != nil {
+		result.Status = STATUS_ERR
+		result.Data["code"] = "invalid param"
+		this.Data["json"] = result
+		this.ServeJSON()
+		return
+	}
+	id := this.Ctx.Input.GetData("id").(int)
+	u, err := models.QueryUserById(id)
+	if err != nil || u == nil {
+		logs.Error("query user failure, id = ", id)
+		result.Status = STATUS_ERR
+		result.Data["code"] = "server internal error"
+		this.Data["json"] = result
+		this.ServeJSON()
+		return
+	}
+	if !u.GAAuth.Authed {
+		result.Status = STATUS_ERR
+		result.Data["code"] = "otp not auth"
+		this.Data["json"] = result
+		this.ServeJSON()
+		return
+	}
+
+	if totp.Validate(info.Code, u.GAAuth.Sercet) {
+		this.Data["json"] = result
+		this.ServeJSON()
+		return
+	} else {
+		result.Status = STATUS_ERR
+		result.Data["code"] = "token mismatch"
+		this.Data["json"] = result
+		this.ServeJSON()
+		return
+	}
 }
